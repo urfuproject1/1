@@ -1,28 +1,37 @@
-import requests
+import streamlit as st
 from PIL import Image
 from transformers import BlipProcessor, BlipForConditionalGeneration
 
-# Initialize BlipProcessor and BlipForConditionalGeneration models
+# Инициализация BlipProcessor и BlipForConditionalGeneration моделей
 processor = BlipProcessor.from_pretrained("Salesforce/blip-image-captioning-large")
 model = BlipForConditionalGeneration.from_pretrained("Salesforce/blip-image-captioning-large")
 
-# Define the URL of the image to be processed
-img_url = 'https://w.forfun.com/fetch/ac/ac4ab3ca5717e7787567def744601ce6.jpeg?w=1200&r=0.5625'
+def main():
+    # Заголовок веб-приложения
+    st.title("Формирование описания к изображению")
 
-# Open and convert the image to RGB format
-raw_image = Image.open(requests.get(img_url, stream=True).raw).convert('RGB')
+    # Загрузка изображения через стримлит
+    uploaded_file = st.file_uploader("Выберите изображение...", type="jpg")
 
-# Perform conditional image captioning
-text = "a photography of"
-inputs = processor(raw_image, text, return_tensors="pt")
+    if uploaded_file is not None:
+        # Открытие и преобразования картинки в rgb формат
+        raw_image = Image.open(uploaded_file).convert('RGB')
 
-# Generate the caption for the image
-out = model.generate(**inputs)
-print(processor.decode(out[0], skip_special_tokens=True))
+        # Создание описания к картинке
+        text = "Картинка"
+        inputs = processor(raw_image, text, return_tensors="pt")
+        out = model.generate(**inputs)
 
-# Perform unconditional image captioning
-inputs = processor(raw_image, return_tensors="pt")
+        # Вывод сгенерированного описания
+        st.image(raw_image, caption="Загруженное изображение", use_column_width=True)
+        st.write("Описание картинки:", processor.decode(out[0], skip_special_tokens=True))
 
-# Generate the caption for the image without any text prompt
-out = model.generate(**inputs)
-print(processor.decode(out[0], skip_special_tokens=True))
+        # Perform unconditional image captioning
+        inputs = processor(raw_image, return_tensors="pt")
+        out = model.generate(**inputs)
+
+        # Вывод сгенерированного описания
+        st.write("Описание картинки:", processor.decode(out[0], skip_special_tokens=True))
+
+if __name__ == '__main__':
+    main()
